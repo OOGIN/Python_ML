@@ -1,79 +1,70 @@
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.model_selection import train_test_split
+
+from flask import Flask
+from flask import request
+
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import GridSearchCV
 
-import numpy as np
 import pandas as pd
-
-import matplotlib.pyplot as plt
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
 import joblib
 
-data = pd.read_csv('DATA_01.csv', engine='python')
-df = pd.DataFrame(data)
-#
-y = df['Thrust Speed Average, mm/min']
-X = df.drop(['Thrust Speed Average, mm/min'], axis=1)
+def GetStandardScaler(csv_file_name, drop_column_name):
+    data = pd.read_csv(csv_file_name, engine='python')
+    df = pd.DataFrame(data)
+        
+    X = df.drop([drop_column_name], axis=1)
+    
+    std = StandardScaler()
+    X = std.fit_transform(X)
+    
+    return std
 
-# 변환된 X로 데이터 분할
-# 데이터 분리
-X_train_org, X_test_org, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=100)
+thrust_gs = joblib.load('./GradientBoosting_model.pkl')
+thrust_model = thrust_gs.best_estimator_
+thrust_std = GetStandardScaler('DATA_01.csv', 'Thrust Speed Average, mm/min')
 
-# 데이터 전처리
+target_gs = joblib.load('./nonCohesiveSoils01_LGBM_GridSearchCV.pkl')
+target_model = target_gs.best_estimator_
+target_std = GetStandardScaler('DataSet_nonCohesiveSoils01.csv', 'Target')
 
-std = StandardScaler()
+app = Flask(__name__)
 
-X_train = std.fit_transform(X_train_org)
-X_test = std.transform(X_test_org)
+@app.route("/GetThrustSpeed", methods=['GET'])
+def GetThrustSpeed():
+    arg_arr = {
+        'USCSID':[request.args['usc']],
+        'lv':[request.args['lv']],
+        'Nvalue':[request.args['nva']],
+        'Total thrust force, MN':[request.args['ttf']],
+        '[99] Average shield jack stroke':[request.args['asjs']],
+        'No.1 Screw revolution, min-1':[request.args['srm']],
+        'Cutter Torque, MN-m':[request.args['ctm']],
+        'No.1 Screw Torque, MN-m':[request.args['stm']],
+        '[58] Cutter Speed':[request.args['cs']],
+        '[66] No.1 Gate stroke':[request.args['gs']],
+        'Soil Pressure, kPa':[request.args['sp']],
+        '[628] Thrust Num Selected':[request.args['tns']]
+    }
+    df = pd.DataFrame(arg_arr)
+    conv_data = thrust_std.transform(df)
+    predicted_value = thrust_model.predict(conv_data)
 
-# 그래디언트부스팅 + 그리드서치로 모델 학습
-gs = joblib.load('./GradientBoosting_model.pkl')
+    return str(predicted_value[0])
+        
+@app.route("/GetTarget", methods=['GET'])
+def GetTarget():
+    arg_arr = {
+        'Thrust Speed Average':[request.args['tsa']],
+        'Total thrust force':[request.args['ttf']],
+        'Screw revolution':[request.args['sr']],
+        'Cutter Torque':[request.args['ct']],
+        'Screw Torque':[request.args['st']],
+        'Soil Pressure':[request.args['sp']],
+    }
+    df = pd.DataFrame(arg_arr)
+    conv_data = target_std.transform(df)
+    predicted_value = target_model.predict(conv_data)
 
+    return str(predicted_value[0])
 
-# 그리드서치 학습 결과 출력
-print('베스트 하이퍼 파라미터: {0}'.format(gs.best_params_))
-print('베스트 하이퍼 파라미터 일 때 훈련 세트의 정확도 점수: {0:.2f}'.format(gs.best_score_))
-
-# 최적화 모델 추출
-model = gs.best_estimator_
-
-
-# 학 습 모델을 현재 경로에 GradientBoosting_model.pkl로 저장
-
-
-# 테스트세트 R^2 점수 출력
-
-score_GB = model.score(X_test, y_test)
-print('테스트세트에서의 정확도 점수: {0:.2f}'.format(score_GB))
-
-# 테스트세트 예측 결과 샘플 출력
-
-predicted_GB = model.predict(X_test)
-
-score = r2_score(y_test, predicted_GB)
-
-print("Mean_absolute_error(MAE):", mean_absolute_error(y_test, predicted_GB))
-mse = mean_squared_error(y_test, predicted_GB)
-print("mean_squared_error(MSE)", mse)
-RMSE = np.sqrt(mse)
-print("RMSE(epsilon = 1.5):", RMSE)
-print("결정계수(설명력) r2_score:", score)
-
-plt.figure(figsize=(8, 8))
-
-# plt.scatter(predicted_GB,y_test,c='gray', edgecolors='w', label = 'Gradient Boosting Regression \n - Grid Search Result \n  learning_rate: %.2f  \n - R2 score: %.2f' %gs.best_params_.get('learning_rate') %score )
-plt.scatter(predicted_GB, y_test,c='yellow', edgecolors='w',label='Gradient Boosting Regression \n - R2 score: %.2f' % score)
-# sns.distplot(df['velocity'],bins=10,kde=True,rug=True,color='red')
-# plt.title('Decision Tree Regression',fontsize=15)
-plt.ylabel('Measured Advance Rate(Test Set), mm/min', fontsize=12)
-plt.xlabel('Predicted Advance Rate, mm/min', fontsize=12)
-# plt.text(0.5,28,'r2_score(epsilon = 1.5) : %.3f' %score_1p5  )
-# plt.text(0.5,27,'RMSE(epsilon = 1.5): %.3f' %RMSE_1p5  )
-plt.grid(linestyle='--')
-plt.legend(loc=2)
-plt.xlim([0, 80])
-plt.ylim([0, 80])
-plt.show()
+if __name__=='__main__':
+    app.run(debug=True)
