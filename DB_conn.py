@@ -12,16 +12,12 @@ data = {"author": "Mike",
         "date": datetime.datetime.utcnow()
         }
 
-# posts 라는 이름의 컬렉션을 만들어 data 삽입
-# db['posts']
-dpInsert = db.posts.insert_one(data)
+# 원하는 이름의 컬렉션을 만들어 data 삽입
+dpInsert = db.tests.insert_one(data)
 
-for d in db['posts'].find():
+for d in db['tests'].find():
     print(d['author'], d['text'], d['tags'])
 
-# hun mongoDB is what..? ['mongoDB', 'python', 'pymongo']
-# lee Who are you? ['person', 'lee']
-
-# text 칼럼을 제외하고 데이터 가져오기
-for d in db['posts'].find({}, {'text' : 0}):
+# text 칼럼을 제외하고 데이터 가져와서 리스트로 묶기
+for d in db['tests'].find({}, {'text' : 0}):
     print(d)

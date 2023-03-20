@@ -1,6 +1,5 @@
 from flask import Flask
 from flask import request
-
 from sklearn.preprocessing import StandardScaler
 
 import pandas as pd
