@@ -17,5 +17,10 @@ def act():
     }
     return ref
 
+@app.route('/Testingroom', methods=['POST'])
+def test():
+    ref={}
+    return ref
+
 if __name__ == "__main__":
     app.run()

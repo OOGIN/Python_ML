@@ -1,28 +1,33 @@
 from pymongo import MongoClient
-from flask import Flask
-
+from flask import request
+from sklearn.preprocessing import StandardScaler
 import pandas as pd
+import joblib
 
-client = MongoClient(host='localhost', port=27017)
+client = MongoClient("mongodb://localhost:27017/")
 
-# data = pd.read_csv('DATA_01.csv', engine='python')
-# df = pd.DataFrame(data)
+db = client['Py_conn'] 
 
-# lines = str(df).split('\n')
+def GetStandardScaler(csv_file_name, drop_column_name):
+    data = pd.read_csv(csv_file_name, engine='python')
+    df = pd.DataFrame(data)
+        
+    X = df.drop([drop_column_name], axis=1)
+    
+    std = StandardScaler()
+    X = std.fit_transform(X)
+    
+    return std
 
-db = client['Py_conn'] # Py_conn 라는 이름의 데이터베이스에 접속
-app = Flask(__name__)
 
-@app.route('/act', methods=['GET'])
-def act():
-    ref={
-        "test": "123"
-    }
-    return ref
+data = {
+    'author' : 'hun',
+    'text' : 'mongoDB is what..?',
+    'tags' : ['mongoDB', 'python', 'pymongo']
+}
 
-# @app.route('/test', methods=['GET'])
-# def test():
-#     return lines
 
-if __name__ == "__main__":
-    app.run()
+dpInsert = db.tests.insert_one(data)
+
+# for datas in db['csv1'].find({}):
+#     print(datas)
