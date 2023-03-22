@@ -18,6 +18,5 @@ with open(data_csv,'r', encoding='utf-8', newline = "") as file_csv, \
     for cols in reader:
         del cols[0]
         cols.append(str(date))
-        #print (cols)
         doc = {col_name: col for col_name, col in zip(col_names, cols)}
         print(json.dumps(doc, ensure_ascii=False), file=file_txt)
