@@ -1,16 +1,11 @@
-import csv 
-from pymongo import MongoClient
+import pymongo
 
-mongoClient = MongoClient()
-db = mongoClient['py_conn']
-collection = db['test1']
+myclient = pymongo.MongoClient('mongodb://localhost:27017/')
 
-header = ['usc', 'lv', 'nva', 'ttf', 'asjs', 'srm', 'ctm', 'stm', 'cs', 'gs', 'sp', 'tns']
-csvFile = open('DATA_01.csv', 'r')
-reader = csv.DictReader(csvFile)
+mydb = myclient['Py_conn']
 
-for each in reader:
-    row = {}
-    for field in header:
-        row[field] = each[field]
-    collection.insert(row)
+mycol = mydb["json"]
+
+x = mycol.find_one()
+
+print(x)

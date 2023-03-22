@@ -37,14 +37,14 @@ def GetThrustSpeed():
         'lv':[request.args['lv']],
         'Nvalue':[request.args['nva']],
         'Total thrust force, MN':[request.args['ttf']],
-        # '[99] Average shield jack stroke':[request.args['asjs']],
+        '[99] Average shield jack stroke':[request.args['asjs']],
         'No.1 Screw revolution, min-1':[request.args['srm']],
         'Cutter Torque, MN-m':[request.args['ctm']],
-        #'No.1 Screw Torque, MN-m':[request.args['stm']],
-        #'[58] Cutter Speed':[request.args['cs']],
-        #'[66] No.1 Gate stroke':[request.args['gs']],
+        'No.1 Screw Torque, MN-m':[request.args['stm']],
+        '[58] Cutter Speed':[request.args['cs']],
+        '[66] No.1 Gate stroke':[request.args['gs']],
         'Soil Pressure, kPa':[request.args['sp']],
-        #'[628] Thrust Num Selected':[request.args['tns']]
+        '[628] Thrust Num Selected':[request.args['tns']]
     }
     df = pd.DataFrame(arg_arr)
     conv_data = thrust_std.transform(df)
